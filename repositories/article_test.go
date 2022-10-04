@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/yanachuwan9sm/myapi-tutorial/models"
 	"github.com/yanachuwan9sm/myapi-tutorial/repositories"
+	"github.com/yanachuwan9sm/myapi-tutorial/repositories/testdata"
 )
 
 // InsertArticle 関数のテスト
@@ -51,25 +52,13 @@ func TestSelectArticleDetail(t *testing.T) {
 		{
 			// 記事 ID1番のテストデータ
 			testTitle: "subtest1",
-			expected: models.Article{
-				ID:       1,
-				Title:    "firstPost",
-				Contents: "This is my first blog",
-				UserName: "saki",
-				NiceNum:  2,
-			},
+			expected:  testdata.ArticleTestData[0],
 		},
 
 		{
 			// 記事 ID2番のテストデータ
 			testTitle: "subtest2",
-			expected: models.Article{
-				ID:       2,
-				Title:    "2nd",
-				Contents: "Second blog post",
-				UserName: "saki",
-				NiceNum:  4,
-			},
+			expected:  testdata.ArticleTestData[0],
 		},
 	}
 	for _, test := range tests {
@@ -113,7 +102,7 @@ func TestSelectArticleDetail(t *testing.T) {
 func TestSelectArticleList(t *testing.T) {
 
 	// arrange
-	expectedNum := 2
+	expectedNum := len(testdata.ArticleTestData)
 
 	// act
 	got, err := repositories.SelectArticleList(testDB, 1)
@@ -133,6 +122,7 @@ func TestUpdateNiceNum(t *testing.T) {
 	articleID := 1
 
 	before, err := repositories.SelectArticleDetail(testDB, articleID)
+
 	if err != nil {
 		t.Fatal("fail to get before data")
 	}

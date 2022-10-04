@@ -121,7 +121,7 @@ func UpdateNiceNum(db *sql.DB, articleID int) error {
 	}
 
 	var nicenum int
-	err = row.Scan(nicenum)
+	err = row.Scan(&nicenum)
 	if err != nil {
 		tx.Rollback()
 		return err
