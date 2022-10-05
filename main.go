@@ -1,8 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -12,28 +10,6 @@ import (
 )
 
 func main() {
-
-	// 接続に使うユーザー・パスワード・データベース名を定義
-	dbUser := "docker"
-	dbPassword := "docker"
-	dbDatabase := "sampledb"
-
-	// データベースに接続するためのアドレス文を定義
-	dbConn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?parseTime=true", dbUser, dbPassword, dbDatabase)
-
-	// データベースに接続
-	db, err := sql.Open("mysql", dbConn)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer db.Close()
-
-	// sql.DB型のPingメソッドで疎通確認をする
-	if err := db.Ping(); err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("connect to DB")
-	}
 
 	//? 標準パッケージ　net/http のみでルーティングを実装
 
