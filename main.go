@@ -8,9 +8,9 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/yanachuwan9sm/myapi-tutorial/controllers"
+	"github.com/yanachuwan9sm/myapi-tutorial/routers"
 	"github.com/yanachuwan9sm/myapi-tutorial/services"
 )
 
@@ -45,14 +45,7 @@ func main() {
 	// MyAppService型をもとに、サーバー全体で使用するコントローラ構造体MyAppControllerを生成
 	con := controllers.NewMyAppController(ser)
 
-	// コントローラ型 MyAppController のハンドラメソッドとパスとの関連付けを行う
-	r := mux.NewRouter() // ルータの作成
-	r.HandleFunc("/article", con.PostArticleHandler).Methods(http.MethodPost)
-	r.HandleFunc("/article/list", con.ArticleListHandler).Methods(http.MethodGet)
-	r.HandleFunc("/article/{id:[0-9]+}", con.ArticleDetailHandler).Methods(http.MethodGet)
-	r.HandleFunc("/article/nice", con.PostNiceHandler).Methods(http.MethodPost)
-	r.HandleFunc("/comment", con.PostCommentHandler).Methods(http.MethodPost)
-
+	r := routers.NewRouter(con)
 	// サーバー起動時のログを出力
 	log.Println("server start at port 8080")
 
