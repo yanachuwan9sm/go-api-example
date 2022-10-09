@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	"github.com/yanachuwan9sm/myapi-tutorial/routers"
+	"github.com/yanachuwan9sm/myapi-tutorial/api"
 )
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 	// cCon := controllers.NewCommentController(ser)
 
 	// 2 つのコントローラ構造体から、gorilla/mux のルータを作成
-	r := routers.NewRouter(db)
+	r := api.NewRouter(db)
 
 	// サーバー起動時のログを出力
 	log.Println("server start at port 8080")
