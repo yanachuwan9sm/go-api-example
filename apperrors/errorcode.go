@@ -9,4 +9,7 @@ const (
 	NAData           ErrCode = "S003" // 指定された記事がない
 	NoTargetData     ErrCode = "S004"
 	UpdateDataFailed ErrCode = "S005"
+
+	ReqBodyDecodeFailed ErrCode = "R001" // リクエストボディの jsonデコードに失敗
+	BadParam            ErrCode = "R002" // リクエストに含まれているパラメータが不正
 )
