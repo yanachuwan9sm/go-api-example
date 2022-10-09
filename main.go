@@ -9,17 +9,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	"github.com/yanachuwan9sm/myapi-tutorial/controllers"
 	"github.com/yanachuwan9sm/myapi-tutorial/routers"
-	"github.com/yanachuwan9sm/myapi-tutorial/services"
 )
-
-// var (
-// 	dbUser     = os.Getenv("DB_USER")
-// 	dbPassword = os.Getenv("DB_PASSWORD")
-// 	dbDatabase = os.Getenv("DB_NAME")
-// 	dbConn     = fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?parseTime=true", dbUser, dbPassword, dbDatabase)
-// )
 
 func main() {
 
@@ -40,12 +31,22 @@ func main() {
 		return
 	}
 	// sql.DB型をもとに、サーバー全体で使用するサービス構造体MyAppServiceを生成
-	ser := services.NewMyAppService(db)
+	// ser := services.NewMyAppService(db)
 
-	// MyAppService型をもとに、サーバー全体で使用するコントローラ構造体MyAppControllerを生成
-	con := controllers.NewMyAppController(ser)
+	// サーバー全体で使用するコントローラ構造体MyAppControllerを生成
+	// インターフェースへの書き換えに伴い、
+	// NewMyAppController 関数の引数が MyAppService 型から MyAppServicer インターフェース型に変更
+	// しかし、MyAppService 型である変数 ser は、MyAppServicer インターフェースにそのまま代入可能なので、
+	// 記述の変更は必要ない。
 
-	r := routers.NewRouter(con)
+	// サービス構造体 MyAppService(変数 ser) をもとに、
+	// ArticleController(変数 aCon) と CommentController(変数 cCon) を作成
+	// aCon := controllers.NewArticleController(ser)
+	// cCon := controllers.NewCommentController(ser)
+
+	// 2 つのコントローラ構造体から、gorilla/mux のルータを作成
+	r := routers.NewRouter(db)
+
 	// サーバー起動時のログを出力
 	log.Println("server start at port 8080")
 
