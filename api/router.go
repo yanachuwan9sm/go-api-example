@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/yanachuwan9sm/myapi-tutorial/api/middlewares"
 	"github.com/yanachuwan9sm/myapi-tutorial/controllers"
 	"github.com/yanachuwan9sm/myapi-tutorial/services"
 )
@@ -21,10 +22,15 @@ func NewRouter(db *sql.DB) *mux.Router {
 	cCon := controllers.NewCommentController(ser)
 
 	r := mux.NewRouter()
+
 	r.HandleFunc("/article", aCon.PostArticleHandler).Methods(http.MethodPost)
 	r.HandleFunc("/article/list", aCon.ArticleListHandler).Methods(http.MethodGet)
 	r.HandleFunc("/article/{id:[0-9]+}", aCon.ArticleDetailHandler).Methods(http.MethodGet)
 	r.HandleFunc("/article/nice", aCon.PostNiceHandler).Methods(http.MethodPost)
 	r.HandleFunc("/comment", cCon.PostCommentHandler).Methods(http.MethodPost)
+
+	// ルータ r に登録されているハンドラの前処理・後処理としてLoggingMiddlewareを使用する
+	r.Use(middlewares.LoggingMiddleware)
+
 	return r
 }
