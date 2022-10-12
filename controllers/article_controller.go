@@ -59,8 +59,8 @@ func (c *ArticleController) ArticleListHandler(w http.ResponseWriter, req *http.
 		var err error
 		page, err = strconv.Atoi(p[0])
 		if err != nil {
-			err = apperrors.BadParam.Wrap(err, "queryparam must be number")
 			// 数字に変換できなかった場合には、リクエスト不正(400)のエラーを返す
+			err = apperrors.BadParam.Wrap(err, "queryparam must be number")
 			apperrors.ErrorHandler(w, req, err)
 			return
 		}

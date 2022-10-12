@@ -17,6 +17,7 @@ func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 
 	// 受け取ったエラーを独自エラー型に変換
 	if !errors.As(err, &appErr) {
+
 		// 第三引数で渡されたエラーが MyAppError 型 でない場合
 		// (開発者が想定していなかった不明なエラーが起きた)
 		appErr = &MyAppError{
@@ -36,7 +37,7 @@ func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	// コメント投稿先として指定された記事がなかった (NoTargetData) 場合
 	// リクエストボディの json デコードに失敗した (ReqBodyDecodeFailed) 場合
 	// リクエストパラメータの値が不正だった (BadParam) 場合
-	case NoTargetData:
+	case NoTargetData, ReqBodyDecodeFailed, BadParam:
 		statusCode = http.StatusBadRequest // 400(BadRequest)
 	default:
 		statusCode = http.StatusInternalServerError // 500(InternalServerError)
