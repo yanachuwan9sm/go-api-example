@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"errors"
+	"sync"
 
 	"github.com/yanachuwan9sm/myapi-tutorial/apperrors"
 	"github.com/yanachuwan9sm/myapi-tutorial/models"
@@ -13,27 +14,53 @@ import (
 // 指定 ID の記事情報を返却
 func (s *MyAppService) GetArticleService(articleID int) (models.Article, error) {
 
-	// 1. repositories層の関数SelectArticleDetailで記事の詳細を取得
-	article, err := repositories.SelectArticleDetail(s.db, articleID)
-	if err != nil {
+	var article models.Article
+	var commentList []models.Comment
+	var articleGetErr, commentGetErr error
+
+	var amu sync.Mutex
+	var cmu sync.Mutex
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// repositories層の関数SelectArticleDetailで記事の詳細を取得
+	go func(db *sql.DB, articleID int) {
+		// ゴールーチン起動時に go 文で指定された関数の引数を使うという形にして、
+		// メインのゴールーチン上にある sql.DB 型や変数 articleID を直接参照を回避する
+		defer wg.Done()
+		amu.Lock()
+		article, articleGetErr = repositories.SelectArticleDetail(db, articleID)
+		amu.Unlock()
+	}(s.db, articleID)
+
+	// repositories層の関数SelectCommentListでコメント一覧を取得
+	go func(db *sql.DB, articleID int) {
+		defer wg.Done()
+		cmu.Lock()
+		commentList, commentGetErr = repositories.SelectCommentList(db, articleID)
+		cmu.Unlock()
+	}(s.db, articleID)
+
+	wg.Wait()
+
+	if articleGetErr != nil {
 		// ErrNoRows は、QueryRow メソッドが全く列を取得できなかったときに
 		// Scan メソッドが呼ばれたときに返却される
-		if errors.Is(err, sql.ErrNoRows) {
-			err = apperrors.NAData.Wrap(err, "no data")
-			return models.Article{}, err
+		if errors.Is(articleGetErr, sql.ErrNoRows) {
+			articleGetErr = apperrors.NAData.Wrap(articleGetErr, "no data")
+			return models.Article{}, articleGetErr
 		}
-		err = apperrors.GetDataFailed.Wrap(err, "fail to get data")
-		return models.Article{}, err
+		articleGetErr = apperrors.GetDataFailed.Wrap(articleGetErr, "fail to get data")
+		return models.Article{}, articleGetErr
 	}
 
-	// 2. repositories層の関数SelectCommentListでコメント一覧を取得
-	commentList, err := repositories.SelectCommentList(s.db, articleID)
-	if err != nil {
-		err = apperrors.GetDataFailed.Wrap(err, "fail to get data")
-		return models.Article{}, err
+	if commentGetErr != nil {
+		commentGetErr = apperrors.GetDataFailed.Wrap(commentGetErr, "fail to get data")
+		return models.Article{}, commentGetErr
 	}
 
-	// 3. 2で得たコメント一覧を、1で得たArticle構造体に紐付ける
+	// コメント一覧をArticle構造体に紐付ける
 	article.CommentList = append(article.CommentList, commentList...)
 	return article, nil
 }
