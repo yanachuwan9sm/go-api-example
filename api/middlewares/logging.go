@@ -35,14 +35,23 @@ func (rsw *resLoggingWriter) WriteHeader(code int) {
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+
+		traceID := newTraceID()
+
 		// リクエスト情報をロギング
-		log.Println(req.RequestURI, req.Method)
+		log.Printf("[%d]%s %s\n", traceID, req.RequestURI, req.Method)
+
+		// TraceIDを付加したコンテキストを取得
+		ctx := SetTraceID(req.Context(), traceID)
+		// Request型にコンテキストをセットする
+		req = req.WithContext(ctx)
 
 		rlw := NewResLoggingWriter(w)
 
 		// 元のハンドラを実行
 		next.ServeHTTP(rlw, req)
 
-		log.Println("res: ", rlw.code)
+		// レスポンス情報をロギング
+		log.Printf("[%d]res: %d", traceID, rlw.code)
 	})
 }

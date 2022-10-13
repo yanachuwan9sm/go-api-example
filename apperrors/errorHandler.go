@@ -8,7 +8,10 @@ package apperrors
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
+
+	"github.com/yanachuwan9sm/myapi-tutorial/api/middlewares"
 )
 
 // エラーが発生したときのレスポンス処理をここで一括で行う
@@ -26,6 +29,10 @@ func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 			Err:     err,
 		}
 	}
+
+	traceID := middlewares.GetTraceID(req.Context())
+	// エラーをトレース ID と共にロギング
+	log.Printf("[%d]error: %s\n", traceID, appErr)
 
 	// ユーザーに返却する HTTPレスポンスコードを格納する変数
 	var statusCode int
