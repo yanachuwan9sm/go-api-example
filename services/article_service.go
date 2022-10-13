@@ -3,7 +3,6 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"sync"
 
 	"github.com/yanachuwan9sm/myapi-tutorial/apperrors"
 	"github.com/yanachuwan9sm/myapi-tutorial/models"
@@ -14,35 +13,52 @@ import (
 // 指定 ID の記事情報を返却
 func (s *MyAppService) GetArticleService(articleID int) (models.Article, error) {
 
+	// Article型とerror型を同時に扱う構造体 (とあるチャネルで送信できる型は一つだけ)
+	type articleResult struct {
+		article models.Article
+		err     error
+	}
+
+	// articleResult型のチャネルを定義
+	articleChan := make(chan articleResult)
+	defer close(articleChan)
+
+	// repositories層の関数SelectArticleDetailで記事の詳細を取得
+	go func(ch chan<- articleResult) {
+		// articleChanを通じて、SelectArticleDetail関数の結果を送信
+		article, err := repositories.SelectArticleDetail(s.db, articleID)
+		ch <- articleResult{article: article, err: err}
+	}(articleChan)
+
+	// Comment型のスライスとerror型を同時に扱う構造体
+	type commentResult struct {
+		commentList *[]models.Comment
+		err         error
+	}
+
+	// commentResult型のチャネルを定義
+	commentChan := make(chan commentResult)
+	defer close(commentChan)
+
+	// repositories層の関数SelectCommentListでコメント一覧を取得
+	go func(ch chan<- commentResult) {
+		// commentChanを通じて、SelectCommentList関数の結果を送信
+		commentList, err := repositories.SelectCommentList(s.db, articleID)
+		ch <- commentResult{commentList: &commentList, err: err}
+	}(commentChan)
+
 	var article models.Article
 	var commentList []models.Comment
 	var articleGetErr, commentGetErr error
 
-	var amu sync.Mutex
-	var cmu sync.Mutex
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	// repositories層の関数SelectArticleDetailで記事の詳細を取得
-	go func(db *sql.DB, articleID int) {
-		// ゴールーチン起動時に go 文で指定された関数の引数を使うという形にして、
-		// メインのゴールーチン上にある sql.DB 型や変数 articleID を直接参照を回避する
-		defer wg.Done()
-		amu.Lock()
-		article, articleGetErr = repositories.SelectArticleDetail(db, articleID)
-		amu.Unlock()
-	}(s.db, articleID)
-
-	// repositories層の関数SelectCommentListでコメント一覧を取得
-	go func(db *sql.DB, articleID int) {
-		defer wg.Done()
-		cmu.Lock()
-		commentList, commentGetErr = repositories.SelectCommentList(db, articleID)
-		cmu.Unlock()
-	}(s.db, articleID)
-
-	wg.Wait()
+	for i := 0; i < 2; i++ {
+		select {
+		case ar := <-articleChan:
+			article, articleGetErr = ar.article, ar.err
+		case cr := <-commentChan:
+			commentList, commentGetErr = *cr.commentList, cr.err
+		}
+	}
 
 	if articleGetErr != nil {
 		// ErrNoRows は、QueryRow メソッドが全く列を取得できなかったときに
